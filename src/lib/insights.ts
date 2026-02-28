@@ -28,22 +28,39 @@ Explanation: ...
 Recommendation: ...
 `;
 
-    const res = await client.responses.create({
-        model: 'gpt-4.1-mini',
-        input: prompt,
-    });
+    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'sk-your-key-here') {
+        return {
+            statusLabel: valueScore > 20 ? 'High Value' : valueScore < -10 ? 'Low Value' : 'Neutral',
+            explanation: 'Insight generation skipped: Valid OpenAI API key required.',
+            recommendation: 'Configure OPENAI_API_KEY in .env for AI-driven recommendations.',
+        };
+    }
 
-    const text = (res.output[0] as any)?.content?.[0]?.text || '';
+    try {
+        const res = await client.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [{ role: 'user', content: prompt }],
+        });
 
-    const labelMatch = text.match(/Label:\s*(.*)/i);
-    const explanationMatch = text.match(/Explanation:\s*(.*)/i);
-    const recMatch = text.match(/Recommendation:\s*(.*)/i);
+        const text = res.choices[0]?.message?.content || '';
 
-    return {
-        statusLabel: labelMatch?.[1]?.trim() || '',
-        explanation: explanationMatch?.[1]?.trim() || '',
-        recommendation: recMatch?.[1]?.trim() || '',
-    };
+        const labelMatch = text.match(/Label:\s*(.*)/i);
+        const explanationMatch = text.match(/Explanation:\s*(.*)/i);
+        const recMatch = text.match(/Recommendation:\s*(.*)/i);
+
+        return {
+            statusLabel: labelMatch?.[1]?.trim() || '',
+            explanation: explanationMatch?.[1]?.trim() || '',
+            recommendation: recMatch?.[1]?.trim() || '',
+        };
+    } catch (error) {
+        console.error('OpenAI Error:', error);
+        return {
+            statusLabel: valueScore > 20 ? 'High Value' : valueScore < -10 ? 'Low Value' : 'Neutral',
+            explanation: 'Intelligence layer throttled. Heuristic analysis applied.',
+            recommendation: 'Verify API capacity and network connectivity.',
+        };
+    }
 }
 
 export async function generateUserSummaryHeuristics(input: {
@@ -79,12 +96,12 @@ Write 3 short bullet points:
 Each bullet under 20 words.
 `;
 
-    const res = await client.responses.create({
-        model: 'gpt-4.1-mini',
-        input: prompt,
+    const res = await client.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: prompt }],
     });
 
-    const text = (res.output[0] as any)?.content?.[0]?.text || '';
+    const text = res.choices[0]?.message?.content || '';
 
     const bullets = text
         .split('\n')

@@ -8,75 +8,73 @@ datasource db {
 }
 
 model Organization {
-  id        Int       @id @default(autoincrement())
+  id        Int        @id @default(autoincrement())
   name      String
-  slug      String    @unique
-  users     User[]
-  teams     Team[]
-  meetings  Meeting[]
-  repos     Repo[]
-  orgPulses OrgPulse[]
+  slug      String     @unique
   auditLogs AuditLog[]
+  meetings  Meeting[]
+  orgPulses OrgPulse[]
+  repos     Repo[]
+  teams     Team[]
+  users     User[]
 }
 
 model Team {
-  id      Int    @id @default(autoincrement())
-  name    String
-  org     Organization @relation(fields: [orgId], references: [id])
-  orgId   Int
-  users   User[]
+  id    Int          @id @default(autoincrement())
+  name  String
+  orgId Int
+  org   Organization @relation(fields: [orgId], references: [id])
+  users User[]
 }
 
 model User {
-  id        Int        @id @default(autoincrement())
-  name      String
-  email     String     @unique
-  org       Organization @relation(fields: [orgId], references: [id])
-  orgId     Int
-  team      Team?      @relation(fields: [teamId], references: [id])
-  teamId    Int?
-  commits   Commit[]
-  meetings  Meeting[]  @relation("MeetingAttendees")
-  userStats UserStats?
-
-  // Phase 5: Security & Governance
-  privacyEnabled     Boolean      @default(false)
-  dataSharingLevel   String       @default("FULL") // FULL, AGGREGATED, NONE
-  optOutReason       String?
+  id               Int          @id @default(autoincrement())
+  name             String
+  email            String       @unique
+  orgId            Int
+  teamId           Int?
+  privacyEnabled   Boolean      @default(false)
+  dataSharingLevel String       @default("FULL")
+  optOutReason     String?
+  commits          Commit[]
+  team             Team?        @relation(fields: [teamId], references: [id])
+  org              Organization @relation(fields: [orgId], references: [id])
+  userStats        UserStats?
+  meetings         Meeting[]    @relation("MeetingAttendees")
 }
 
 model Repo {
-  id        Int      @id @default(autoincrement())
+  id        Int          @id @default(autoincrement())
   name      String
   githubUrl String?
-  org       Organization @relation(fields: [orgId], references: [id])
   orgId     Int
   commits   Commit[]
+  org       Organization @relation(fields: [orgId], references: [id])
 }
 
 model Meeting {
-  id        Int      @id @default(autoincrement())
+  id        Int          @id @default(autoincrement())
   title     String
   startTime DateTime
   endTime   DateTime
   seriesKey String
-  org       Organization @relation(fields: [orgId], references: [id])
   orgId     Int
-  attendees User[]  @relation("MeetingAttendees")
+  org       Organization @relation(fields: [orgId], references: [id])
+  attendees User[]       @relation("MeetingAttendees")
 }
 
 model Commit {
   id        Int      @id @default(autoincrement())
   sha       String   @unique
-  author    User?    @relation(fields: [authorId], references: [id])
   authorId  Int?
   timestamp DateTime
-  repo      Repo?    @relation(fields: [repoId], references: [id])
   repoId    Int?
+  repo      Repo?    @relation(fields: [repoId], references: [id])
+  author    User?    @relation(fields: [authorId], references: [id])
 }
 
 model MeetingSeriesStats {
-  seriesKey             String @id
+  seriesKey             String  @id
   avgPostMeetingCommits Float
   baselineCommits       Float
   valueScore            Int
@@ -87,34 +85,35 @@ model MeetingSeriesStats {
 }
 
 model UserStats {
-  userId             Int    @id
-  user               User   @relation(fields: [userId], references: [id])
-  meetingHoursPerDay String // JSON map {0..6 -> hours}
-  commitsByHour      String // JSON array [24]
+  userId             Int     @id @default(autoincrement())
+  meetingHoursPerDay String
+  commitsByHour      String
   burnoutFlag        Boolean
-  summaryBullets     String? // JSON array of bullet strings
+  summaryBullets     String?
+  user               User    @relation(fields: [userId], references: [id])
 }
 
 model AuditLog {
-  id          Int      @id @default(autoincrement())
-  timestamp   DateTime @default(now())
-  orgId       Int
-  org         Organization @relation(fields: [orgId], references: [id])
-  userId      Int?
-  action      String
-  resource    String
-  details     String?   // JSON string of changes or metadata
-  ipAddress   String?
+  id        Int          @id @default(autoincrement())
+  timestamp DateTime     @default(now())
+  orgId     Int
+  userId    Int?
+  action    String
+  resource  String
+  details   String?
+  ipAddress String?
+  org       Organization @relation(fields: [orgId], references: [id])
 }
+
 model OrgPulse {
-  id                Int      @id @default(autoincrement())
-  org               Organization @relation(fields: [orgId], references: [id])
+  id                Int          @id @default(autoincrement())
   orgId             Int
-  timestamp         DateTime @default(now())
+  timestamp         DateTime     @default(now())
   activeSeriesCount Int
   teamVelocity      Int
   focusScore        Int
-  burnoutRisk       Int      // 0-100 percentage
+  burnoutRisk       Int
   signalsDetected   Int
   summarySnippet    String?
+  org               Organization @relation(fields: [orgId], references: [id])
 }
