@@ -1,0 +1,21 @@
+name: Generate PlantUML Diagrams
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - docs/usecase.puml
+      - docs/architecture.puml
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+      - run: sudo apt-get update && sudo apt-get install -y graphviz default-jre
+      - run: wget -O plantuml.jar https://github.com/plantuml/plantuml/releases/download/v1.2024.3/plantuml-1.2024.3.jar
+      - run: mkdir -p docs/diagrams
+      - run: java -jar plantuml.jar -tpng docs/usecase.puml -o diagrams
+      - run: java -jar plantuml.jar -tpng docs/architecture.puml -o diagrams
+      - run: git config user.name github-actions && git config user.email github-actions@github.com && git add docs/diagrams/ && git diff --staged --quiet || git commit -m add-diagram && git push

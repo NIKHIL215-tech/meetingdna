@@ -1,0 +1,90 @@
+@startuml MeetingDNAArchitecture
+
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 18
+skinparam padding 10
+skinparam nodesep 60
+skinparam ranksep 80
+skinparam shadowing true
+skinparam arrow {
+  Color #555555
+  FontSize 16
+}
+skinparam component {
+  BackgroundColor #E8F4FD
+  BorderColor #2E86AB
+  FontSize 18
+}
+skinparam database {
+  BackgroundColor #FFF9C4
+  BorderColor #F9A825
+  FontSize 18
+}
+skinparam rectangle {
+  FontStyle Bold
+  FontSize 20
+}
+skinparam actor {
+  BackgroundColor #C8E6C9
+  BorderColor #388E3C
+  FontSize 18
+}
+
+top to bottom direction
+
+actor "User / Developer" as User
+actor "Engineering Lead" as Lead
+actor "Admin" as Admin
+
+rectangle "External Services" #FFE6CC {
+  component "GitHub API" as GitHub
+  component "Slack API" as Slack
+  component "Meeting Transcripts" as Transcripts
+}
+
+rectangle "Frontend - Next.js App Router" #D5E8D4 {
+  component "Dashboard Page" as Dashboard
+  component "People Page" as People
+  component "Predictive Page" as Predictive
+  component "Admin Page" as AdminPage
+}
+
+rectangle "Backend - API Layer" #E1D5E7 {
+  component "Analytics API" as AnalyticsAPI
+  component "Correlation Engine" as Correlation
+  component "Schedule Optimizer" as Scheduler
+  component "Fatigue Monitor" as Fatigue
+  component "Auth Service" as Auth
+}
+
+rectangle "Data Layer" #FFF9C4 {
+  database "SQLite Database\n(via Prisma ORM)" as DB
+  component "Prisma Client" as Prisma
+  component "Seed Service" as Seed
+}
+
+User --> Dashboard
+Lead --> Predictive
+Admin --> AdminPage
+
+Dashboard --> AnalyticsAPI
+People --> AnalyticsAPI
+Predictive --> Fatigue
+AdminPage --> Auth
+
+GitHub --> Correlation : commit data
+Slack --> Correlation : signal data
+Transcripts --> Correlation : meeting data
+
+AnalyticsAPI --> Correlation
+AnalyticsAPI --> Scheduler
+Correlation --> Prisma
+Scheduler --> Prisma
+Fatigue --> Prisma
+Auth --> Prisma
+
+Prisma --> DB
+Seed --> DB
+
+@enduml

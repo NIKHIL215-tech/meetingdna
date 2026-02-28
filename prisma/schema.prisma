@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Organization {
+  id        Int       @id @default(autoincrement())
+  name      String
+  slug      String    @unique
+  users     User[]
+  teams     Team[]
+  meetings  Meeting[]
+  repos     Repo[]
+  orgPulses OrgPulse[]
+  auditLogs AuditLog[]
+}
+
+model Team {
+  id      Int    @id @default(autoincrement())
+  name    String
+  org     Organization @relation(fields: [orgId], references: [id])
+  orgId   Int
+  users   User[]
+}
+
+model User {
+  id        Int        @id @default(autoincrement())
+  name      String
+  email     String     @unique
+  org       Organization @relation(fields: [orgId], references: [id])
+  orgId     Int
+  team      Team?      @relation(fields: [teamId], references: [id])
+  teamId    Int?
+  commits   Commit[]
+  meetings  Meeting[]  @relation("MeetingAttendees")
+  userStats UserStats?
+
+  // Phase 5: Security & Governance
+  privacyEnabled     Boolean      @default(false)
+  dataSharingLevel   String       @default("FULL") // FULL, AGGREGATED, NONE
+  optOutReason       String?
+}
+
+model Repo {
+  id        Int      @id @default(autoincrement())
+  name      String
+  githubUrl String?
+  org       Organization @relation(fields: [orgId], references: [id])
+  orgId     Int
+  commits   Commit[]
+}
+
+model Meeting {
+  id        Int      @id @default(autoincrement())
+  title     String
+  startTime DateTime
+  endTime   DateTime
+  seriesKey String
+  org       Organization @relation(fields: [orgId], references: [id])
+  orgId     Int
+  attendees User[]  @relation("MeetingAttendees")
+}
+
+model Commit {
+  id        Int      @id @default(autoincrement())
+  sha       String   @unique
+  author    User?    @relation(fields: [authorId], references: [id])
+  authorId  Int?
+  timestamp DateTime
+  repo      Repo?    @relation(fields: [repoId], references: [id])
+  repoId    Int?
+}
+
+model MeetingSeriesStats {
+  seriesKey             String @id
+  avgPostMeetingCommits Float
+  baselineCommits       Float
+  valueScore            Int
+  numOccurrences        Int
+  statusLabel           String?
+  explanation           String?
+  recommendation        String?
+}
+
+model UserStats {
+  userId             Int    @id
+  user               User   @relation(fields: [userId], references: [id])
+  meetingHoursPerDay String // JSON map {0..6 -> hours}
+  commitsByHour      String // JSON array [24]
+  burnoutFlag        Boolean
+  summaryBullets     String? // JSON array of bullet strings
+}
+
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  timestamp   DateTime @default(now())
+  orgId       Int
+  org         Organization @relation(fields: [orgId], references: [id])
+  userId      Int?
+  action      String
+  resource    String
+  details     String?   // JSON string of changes or metadata
+  ipAddress   String?
+}
+model OrgPulse {
+  id                Int      @id @default(autoincrement())
+  org               Organization @relation(fields: [orgId], references: [id])
+  orgId             Int
+  timestamp         DateTime @default(now())
+  activeSeriesCount Int
+  teamVelocity      Int
+  focusScore        Int
+  burnoutRisk       Int      // 0-100 percentage
+  signalsDetected   Int
+  summarySnippet    String?
+}

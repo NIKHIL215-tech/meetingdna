@@ -1,0 +1,127 @@
+@startuml MeetingDNADiagram
+
+skinparam dpi 150
+skinparam usecase {
+  BackgroundColor #E8F4FD
+  BorderColor #2E86AB
+  FontName Arial
+  FontSize 18
+}
+skinparam package {
+  BackgroundColor #FFFDE7
+  BorderColor #F9A825
+  FontStyle Bold
+  FontSize 20
+}
+skinparam actor {
+  BackgroundColor #C8E6C9
+  BorderColor #388E3C
+  FontSize 18
+  FontStyle Bold
+}
+skinparam rectangle {
+  BackgroundColor #F3E5F5
+  BorderColor #7B1FA2
+  FontStyle Bold
+  FontSize 22
+}
+skinparam arrow {
+  Color #555555
+  FontSize 16
+}
+skinparam shadowing true
+skinparam defaultFontName Arial
+skinparam defaultFontSize 18
+skinparam padding 10
+skinparam nodesep 60
+skinparam ranksep 80
+
+top to bottom direction
+
+actor Developer as Dev
+actor "Engineering\nLead" as Lead
+actor Admin
+actor "GitHub" as GitHub <<external>>
+actor "Slack" as Slack <<external>>
+
+rectangle "MeetingDNA Platform" {
+
+  package "Dashboard" {
+    (View Team Health Dashboard) as UC1
+    (View Commit Velocity) as UC2
+    (View Meeting Density) as UC3
+    UC1 -[hidden]- UC2
+    UC2 -[hidden]- UC3
+  }
+
+  package "Correlation Engine" {
+    (Correlate Meetings with Commits) as UC4
+    (Detect Implementation Drift) as UC5
+    (Calculate Meeting ROI) as UC6
+    UC4 -[hidden]- UC5
+    UC5 -[hidden]- UC6
+  }
+
+  package "Schedule Optimization" {
+    (Scan Calendar for Conflicts) as UC7
+    (Protect Deep Work Windows) as UC8
+    (Quantify Focus Cost) as UC9
+    UC7 -[hidden]- UC8
+    UC8 -[hidden]- UC9
+  }
+
+  package "Performance Analytics" {
+    (View Personal Performance Report) as UC10
+    (Get Coaching Suggestions) as UC11
+    (Track Historical Performance) as UC12
+    UC10 -[hidden]- UC11
+    UC11 -[hidden]- UC12
+  }
+
+  package "Fatigue Monitoring" {
+    (Detect Burnout Risk) as UC13
+    (Analyze Late-Night Commits) as UC14
+    (View Predictive Fatigue Score) as UC15
+    UC13 -[hidden]- UC14
+    UC14 -[hidden]- UC15
+  }
+
+  package "Admin Panel" {
+    (Manage Users) as UC16
+    (Seed Telemetry Data) as UC17
+    (Configure Integrations) as UC18
+    UC16 -[hidden]- UC17
+    UC17 -[hidden]- UC18
+  }
+}
+
+Dev --> UC1
+Dev --> UC10
+Dev --> UC11
+Dev --> UC8
+Dev --> UC15
+
+Lead --> UC4
+Lead --> UC5
+Lead --> UC6
+Lead --> UC7
+Lead --> UC13
+
+Admin --> UC16
+Admin --> UC17
+Admin --> UC18
+
+GitHub --> UC2
+GitHub --> UC14
+Slack --> UC3
+
+UC4 .> UC5 : <<include>>
+UC4 .> UC6 : <<include>>
+UC7 .> UC8 : <<include>>
+UC7 .> UC9 : <<include>>
+UC13 .> UC14 : <<include>>
+UC13 .> UC15 : <<include>>
+UC10 .> UC12 : <<include>>
+UC11 .> UC12 : <<extend>>
+
+@enduml
