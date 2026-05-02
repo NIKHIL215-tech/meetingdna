@@ -5,28 +5,13 @@ import Link from 'next/link';
 import LandingHero from '@/components/LandingHero';
 import FeatureShowcase from '@/components/FeatureShowcase';
 import BackgroundEffects from '@/components/BackgroundEffects';
+import { AnimatedNavFramer } from '@/components/ui/navigation-menu';
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-bg-base overflow-x-hidden relative">
       <BackgroundEffects />
-      <nav className="fixed top-0 left-0 right-0 z-50 px-8 py-6 backdrop-blur-md bg-bg-base/30 border-b border-white/5">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-400 to-blue-600 flex items-center justify-center font-bold text-white shadow-lg shadow-teal-500/20">
-              MD
-            </div>
-            <span className="text-lg font-bold tracking-tight text-white">MeetingDNA</span>
-          </div>
-          <div className="hidden md:flex items-center gap-8 text-[11px] font-bold uppercase tracking-widest text-slate-400">
-            <a href="#features" className="hover:text-white transition-colors">Platform</a>
-            <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-            <Link href="/dashboard" className="px-6 py-2.5 bg-white text-black rounded-xl hover:bg-teal-400 transition-all font-bold">
-              Enter Dashboard
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <AnimatedNavFramer />
 
       <main>
         <LandingHero />
@@ -86,7 +71,7 @@ export default function LandingPage() {
               <Link href="/dashboard" className="w-full md:w-auto px-10 py-5 bg-teal-500 text-white font-bold rounded-2xl uppercase tracking-widest shadow-xl shadow-teal-500/30 hover:scale-105 transition-transform">
                 Get Started Free
               </Link>
-              <button className="w-full md:w-auto px-10 py-5 bg-white/5 border border-white/10 text-white font-bold rounded-2xl uppercase tracking-widest hover:bg-white/10 transition-all font-bold">
+              <button type="button" className="w-full md:w-auto px-10 py-5 bg-white/5 border border-white/10 text-white font-bold rounded-2xl uppercase tracking-widest hover:bg-white/10 transition-all font-bold">
                 Schedule Demo
               </button>
             </div>

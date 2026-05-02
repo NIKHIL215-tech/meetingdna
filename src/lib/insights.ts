@@ -1,6 +1,29 @@
-import OpenAI from 'openai';
+import { InferenceClient } from '@huggingface/inference';
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Model used for all text generation — swap to any HF chat-compatible model
+const HF_MODEL = 'mistralai/Mistral-7B-Instruct-v0.3';
+
+function getClient() {
+    return new InferenceClient(process.env.HUGGINGFACE_API_KEY || '');
+}
+
+const hasValidKey = () =>
+    !!process.env.HUGGINGFACE_API_KEY &&
+    process.env.HUGGINGFACE_API_KEY !== 'hf_your_key_here';
+
+async function chatComplete(systemPrompt: string, userPrompt: string): Promise<string> {
+    const client = getClient();
+    const response = await client.chatCompletion({
+        model: HF_MODEL,
+        messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+        ],
+        max_tokens: 256,
+        temperature: 0.5,
+    });
+    return response.choices[0]?.message?.content?.trim() || '';
+}
 
 export async function generateMeetingInsights(input: {
     title: string;
@@ -10,55 +33,47 @@ export async function generateMeetingInsights(input: {
     numOccurrences: number;
 }) {
     const { title, valueScore, avgPost, baseline, numOccurrences } = input;
-    const prompt = `
-Meeting title: "${title}"
-Meeting value score: ${valueScore}
-Average commits after meeting: ${avgPost.toFixed(2)}
-Baseline commits per window: ${baseline.toFixed(2)}
-Occurrences: ${numOccurrences}
 
-1. Classify as "High value", "Neutral", or "Low value".
-2. Explain why in 1-2 short sentences.
-3. Recommend: keep as is / shorten / reduce frequency / consider cancelling.
-
-Return:
-
-Label: ...
-Explanation: ...
-Recommendation: ...
-`;
-
-    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'sk-your-key-here') {
+    if (!hasValidKey()) {
         return {
             statusLabel: valueScore > 20 ? 'High Value' : valueScore < -10 ? 'Low Value' : 'Neutral',
-            explanation: 'Insight generation skipped: Valid OpenAI API key required.',
-            recommendation: 'Configure OPENAI_API_KEY in .env for AI-driven recommendations.',
+            explanation: 'Insight generation skipped: Valid HuggingFace API key required.',
+            recommendation: 'Set HUGGINGFACE_API_KEY in .env for AI-driven recommendations.',
         };
     }
 
-    try {
-        const res = await client.chat.completions.create({
-            model: 'gpt-4o-mini',
-            messages: [{ role: 'user', content: prompt }],
-        });
+    const userPrompt = `Meeting title: "${title}"
+Value score: ${valueScore} (range -100 to 100)
+Avg commits after meeting: ${avgPost.toFixed(2)}
+Baseline commits per window: ${baseline.toFixed(2)}
+Occurrences: ${numOccurrences}
 
-        const text = res.choices[0]?.message?.content || '';
+Respond in exactly this format:
+Label: <High Value|Neutral|Low Value>
+Explanation: <1-2 sentences>
+Recommendation: <keep as is|shorten|reduce frequency|consider cancelling>`;
+
+    try {
+        const text = await chatComplete(
+            'You are an engineering analytics assistant. Be concise and data-driven.',
+            userPrompt
+        );
 
         const labelMatch = text.match(/Label:\s*(.*)/i);
         const explanationMatch = text.match(/Explanation:\s*(.*)/i);
         const recMatch = text.match(/Recommendation:\s*(.*)/i);
 
         return {
-            statusLabel: labelMatch?.[1]?.trim() || '',
-            explanation: explanationMatch?.[1]?.trim() || '',
-            recommendation: recMatch?.[1]?.trim() || '',
+            statusLabel: labelMatch?.[1]?.trim() || (valueScore > 20 ? 'High Value' : valueScore < -10 ? 'Low Value' : 'Neutral'),
+            explanation: explanationMatch?.[1]?.trim() || 'Heuristic analysis applied.',
+            recommendation: recMatch?.[1]?.trim() || 'Review meeting cadence.',
         };
     } catch (error) {
-        console.error('OpenAI Error:', error);
+        console.error('HuggingFace insights error:', error);
         return {
             statusLabel: valueScore > 20 ? 'High Value' : valueScore < -10 ? 'Low Value' : 'Neutral',
             explanation: 'Intelligence layer throttled. Heuristic analysis applied.',
-            recommendation: 'Verify API capacity and network connectivity.',
+            recommendation: 'Verify HuggingFace API key and quota.',
         };
     }
 }
@@ -71,47 +86,52 @@ export async function generateUserSummaryHeuristics(input: {
     totalCommits: number;
     burnoutFlag: boolean;
 }) {
-    const {
-        name,
-        topHours,
-        totalMeetingHours,
-        mostMeetingDays,
-        totalCommits,
-        burnoutFlag,
-    } = input;
+    const { name, topHours, totalMeetingHours, mostMeetingDays, totalCommits, burnoutFlag } = input;
 
-    const prompt = `
-Name: ${name}
-Top productive hours: ${JSON.stringify(topHours)}
-Total weekly meeting hours: ${totalMeetingHours.toFixed(1)}
-Days with most meetings (0=Mon..6=Sun): ${JSON.stringify(mostMeetingDays)}
+    if (!hasValidKey()) {
+        return [
+            `Most productive during hours: ${topHours.join(', ')}.`,
+            'Protect focus time on heavy meeting days.',
+            burnoutFlag ? 'High meeting load detected — overload risk flagged.' : 'Workload appears sustainable.',
+        ];
+    }
+
+    const userPrompt = `Developer: ${name}
+Peak productive hours (24h): ${JSON.stringify(topHours)}
+Weekly meeting hours: ${totalMeetingHours.toFixed(1)}
+Heaviest meeting days (0=Sun): ${JSON.stringify(mostMeetingDays)}
 Total commits: ${totalCommits}
-Burnout risk flag: ${burnoutFlag}
+Burnout risk: ${burnoutFlag}
 
-Write 3 short bullet points:
+Write exactly 3 bullet points (start each with "- "), each under 20 words:
 1. When this person is most productive.
-2. Suggest when to protect focus time or move meetings.
-3. Note on workload; mention overload risk only if burnoutFlag is true.
+2. When to protect focus time or reschedule meetings.
+3. Workload note (mention overload only if burnout risk is true).`;
 
-Each bullet under 20 words.
-`;
+    try {
+        const text = await chatComplete(
+            'You are a developer performance coach. Be concise and actionable.',
+            userPrompt
+        );
 
-    const res = await client.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: prompt }],
-    });
+        const bullets = text
+            .split('\n')
+            .filter((l) => l.trim().startsWith('-') || /^\d+\./.test(l.trim()))
+            .map((l) => l.replace(/^[-\d.\s]+/, '').trim())
+            .filter(Boolean)
+            .slice(0, 3);
 
-    const text = res.choices[0]?.message?.content || '';
-
-    const bullets = text
-        .split('\n')
-        .filter(
-            (l: string) =>
-                l.trim().startsWith('-') ||
-                l.trim().match(/^\d+\./)
-        )
-        .map((l: string) => l.replace(/^[-\d\.\s]+/, '').trim())
-        .slice(0, 3);
-
-    return bullets;
+        return bullets.length === 3 ? bullets : [
+            `Most productive during hours: ${topHours.join(', ')}.`,
+            'Protect focus time on heavy meeting days.',
+            burnoutFlag ? 'High meeting load — overload risk flagged.' : 'Workload appears sustainable.',
+        ];
+    } catch (error) {
+        console.error('HuggingFace summary error:', error);
+        return [
+            `Most productive during hours: ${topHours.join(', ')}.`,
+            'Protect focus time on heavy meeting days.',
+            burnoutFlag ? 'High meeting load — overload risk flagged.' : 'Workload appears sustainable.',
+        ];
+    }
 }

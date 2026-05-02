@@ -4,7 +4,7 @@ import useSWR from 'swr';
 import axios from 'axios';
 import Link from 'next/link';
 
-const fetcher = (url: string) => axios.get(url).then((r) => r.data);
+const fetcher = (url: string) => axios.get(url).then((r) => r.data?.data ?? r.data);
 
 export default function PeoplePage() {
     const { data: users, error } = useSWR('/api/users', fetcher);

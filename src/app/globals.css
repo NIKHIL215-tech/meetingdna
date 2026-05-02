@@ -7,11 +7,51 @@
   --color-bg-surface: hsl(222, 47%, 7%);
   --color-bg-glass: hsla(222, 47%, 10%, 0.6);
   --color-border-subtle: hsla(217, 19%, 27%, 0.4);
+
+  /* shadcn/ui design tokens exposed as Tailwind utilities */
+  --color-background: hsl(222, 47%, 4%);
+  --color-foreground: hsl(213, 27%, 84%);
+  --color-card: hsl(222, 47%, 6%);
+  --color-card-foreground: hsl(213, 27%, 84%);
+  --color-popover: hsl(222, 47%, 6%);
+  --color-popover-foreground: hsl(213, 27%, 84%);
+  --color-primary: hsl(171, 77%, 45%);
+  --color-primary-foreground: hsl(222, 47%, 4%);
+  --color-secondary: hsl(217, 33%, 17%);
+  --color-secondary-foreground: hsl(213, 27%, 84%);
+  --color-muted: hsl(217, 33%, 12%);
+  --color-muted-foreground: hsl(215, 16%, 47%);
+  --color-accent: hsl(217, 33%, 17%);
+  --color-accent-foreground: hsl(213, 27%, 84%);
+  --color-destructive: hsl(0, 63%, 31%);
+  --color-destructive-foreground: hsl(213, 27%, 84%);
+  --color-border: hsla(217, 19%, 27%, 0.4);
+  --color-input: hsla(217, 19%, 27%, 0.4);
+  --color-ring: hsl(171, 77%, 45%);
+  --radius: 0.5rem;
 }
 
 :root {
   --background: hsl(222, 47%, 4%);
   --foreground: hsl(213, 27%, 84%);
+  --card: hsl(222, 47%, 6%);
+  --card-foreground: hsl(213, 27%, 84%);
+  --popover: hsl(222, 47%, 6%);
+  --popover-foreground: hsl(213, 27%, 84%);
+  --primary: hsl(171, 77%, 45%);
+  --primary-foreground: hsl(222, 47%, 4%);
+  --secondary: hsl(217, 33%, 17%);
+  --secondary-foreground: hsl(213, 27%, 84%);
+  --muted: hsl(217, 33%, 12%);
+  --muted-foreground: hsl(215, 16%, 47%);
+  --accent: hsl(217, 33%, 17%);
+  --accent-foreground: hsl(213, 27%, 84%);
+  --destructive: hsl(0, 63%, 31%);
+  --destructive-foreground: hsl(213, 27%, 84%);
+  --border: hsla(217, 19%, 27%, 0.4);
+  --input: hsla(217, 19%, 27%, 0.4);
+  --ring: hsl(171, 77%, 45%);
+  --radius: 0.5rem;
 }
 
 @layer base {
@@ -26,6 +66,7 @@
 @layer utilities {
   .glass-card {
     background: var(--color-bg-glass);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
     backdrop-filter: blur(16px) saturate(180%);
     border: 1px solid var(--color-border-subtle);
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);

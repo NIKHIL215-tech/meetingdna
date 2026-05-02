@@ -4,7 +4,7 @@ import React from 'react';
 import useSWR, { mutate } from 'swr';
 import axios from 'axios';
 
-const fetcher = (url: string) => axios.get(url).then((r) => r.data);
+const fetcher = (url: string) => axios.get(url).then((r) => r.data?.data ?? r.data);
 
 export default function OrgSwitcher() {
     const { data: orgs } = useSWR('/api/organizations', fetcher);
@@ -37,16 +37,18 @@ export default function OrgSwitcher() {
 
     return (
         <div className="relative group">
-            <label className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold mb-2 block">
+            <label htmlFor="org-switcher" className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold mb-2 block">
                 Organization Context
             </label>
             <select
+                id="org-switcher"
+                title="Organization Context"
                 value={currentOrgId || ''}
                 onChange={handleOrgChange}
                 className="w-full bg-white/[0.03] border border-white/10 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-teal-500/50 appearance-none cursor-pointer transition-all hover:bg-white/[0.05]"
             >
                 <option value="" disabled className="bg-bg-surface text-slate-500">Select Organization</option>
-                {orgs.map((org: any) => (
+                {orgs.map((org: { id: string; name: string }) => (
                     <option key={org.id} value={org.id} className="bg-bg-surface text-slate-100">
                         {org.name}
                     </option>

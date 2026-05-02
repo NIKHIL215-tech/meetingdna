@@ -5,7 +5,7 @@ import useSWR from 'swr';
 import axios from 'axios';
 import SmartCalendar from '@/components/SmartCalendar';
 
-const fetcher = (url: string) => axios.get(url).then((r) => r.data);
+const fetcher = (url: string) => axios.get(url).then((r) => r.data?.data ?? r.data);
 
 export default function PredictivePage() {
     const { data: pulse } = useSWR('/api/analytics/pulse', fetcher);

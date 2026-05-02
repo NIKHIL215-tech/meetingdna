@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -74,7 +74,7 @@ model Commit {
 }
 
 model MeetingSeriesStats {
-  seriesKey             String  @id
+  seriesKey             String  @id @db.VarChar(255)
   avgPostMeetingCommits Float
   baselineCommits       Float
   valueScore            Int

@@ -3,7 +3,7 @@
 import useSWR from 'swr';
 import axios from 'axios';
 
-const fetcher = (url: string) => axios.get(url).then((r) => r.data);
+const fetcher = (url: string) => axios.get(url).then((r) => r.data?.data ?? r.data);
 
 export default function MeetingsPage() {
     const { data: series, error } = useSWR('/api/meetings/series', fetcher);

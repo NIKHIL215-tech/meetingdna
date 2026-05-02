@@ -1,22 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentOrgId } from '@/lib/auth';
+import { connectIntegration } from '@/lib/services/org.service';
+import { errorResponse } from '@/lib/errors';
+import { validateIntegrationProvider } from '@/lib/validators';
 
 export async function POST(req: NextRequest) {
-    const orgId = await getCurrentOrgId();
-    const { provider } = await req.json();
-
-    if (!provider) {
-        return NextResponse.json({ error: 'Provider is required' }, { status: 400 });
+    try {
+        const orgId = await getCurrentOrgId();
+        const body = await req.json();
+        const provider = validateIntegrationProvider(body.provider);
+        const result = await connectIntegration(orgId, provider);
+        return NextResponse.json({ status: 'success', data: result });
+    } catch (error) {
+        return errorResponse(error);
     }
-
-    // In a real app, this would integrate with OAuth and store tokens.
-    // For the enterprise prototype, we simulate a successful connection.
-    console.log(`Connecting organization ${orgId} to ${provider}`);
-
-    return NextResponse.json({
-        success: true,
-        provider,
-        orgId,
-        connectedAt: new Date().toISOString(),
-    });
 }

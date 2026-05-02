@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { listOrganizations } from '@/lib/services/org.service';
+import { errorResponse } from '@/lib/errors';
 
 export async function GET() {
-    const orgs = await prisma.organization.findMany();
-    return NextResponse.json(orgs);
+    try {
+        const orgs = await listOrganizations();
+        return NextResponse.json({ status: 'success', data: orgs });
+    } catch (error) {
+        return errorResponse(error);
+    }
 }

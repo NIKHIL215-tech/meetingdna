@@ -3,10 +3,9 @@
 import React from 'react';
 import useSWR, { useSWRConfig } from 'swr';
 import axios from 'axios';
-import Link from 'next/link';
 import TeamHealthHeatmap from '@/components/TeamHealthHeatmap';
 
-const fetcher = (url: string) => axios.get(url).then((r) => r.data);
+const fetcher = (url: string) => axios.get(url).then((r) => r.data?.data ?? r.data);
 
 export default function DashboardPage() {
     const { data: heatmapData } = useSWR('/api/analytics/heatmap', fetcher);
@@ -163,7 +162,7 @@ export default function DashboardPage() {
 }
 
 function StatCard({ label, value, trend, color, progress }: { label: string; value: string | number; trend: string; color: string; progress: number }) {
-    const colorMap: any = {
+    const colorMap: Record<string, string> = {
         teal: 'from-teal-400 to-teal-600',
         blue: 'from-blue-400 to-blue-600',
         indigo: 'from-indigo-400 to-indigo-600',

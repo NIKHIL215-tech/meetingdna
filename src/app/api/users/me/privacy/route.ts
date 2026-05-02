@@ -2,37 +2,35 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentOrgId } from '@/lib/auth';
 import { createAuditLog } from '@/lib/audit';
+import { updateUserPrivacy } from '@/lib/services/user.service';
+import { errorResponse } from '@/lib/errors';
+import { validatePrivacyPayload } from '@/lib/validators';
 
 export async function POST(req: NextRequest) {
-    const orgId = await getCurrentOrgId();
-    const { privacyEnabled, dataSharingLevel } = await req.json();
+    try {
+        const orgId = await getCurrentOrgId();
+        const body = await req.json();
+        const { privacyEnabled, dataSharingLevel, optOutReason } = validatePrivacyPayload(body);
 
-    // In a real app, 'me' would be extracted from the session (auth).
-    // For this prototype, we'll take the first user in the organization.
-    const user = await prisma.user.findFirst({
-        where: { orgId }
-    });
+        // Resolve "me" — in production this comes from the session token
+        const me = await prisma.user.findFirst({ where: { orgId } });
+        if (!me) {
+            const { NotFoundError } = await import('@/lib/errors');
+            throw new NotFoundError('User');
+        }
 
-    if (!user) {
-        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        const updated = await updateUserPrivacy(me.id, orgId, privacyEnabled, dataSharingLevel, optOutReason);
+
+        await createAuditLog({
+            orgId,
+            userId: me.id,
+            action: 'UPDATE_PRIVACY_SETTINGS',
+            resource: 'USER_PROFILE',
+            details: { privacyEnabled, dataSharingLevel },
+        });
+
+        return NextResponse.json({ status: 'success', data: updated });
+    } catch (error) {
+        return errorResponse(error);
     }
-
-    const updatedUser = await prisma.user.update({
-        where: { id: user.id },
-        data: {
-            privacyEnabled,
-            dataSharingLevel,
-        },
-    });
-
-    // RECORD AUDIT LOG
-    await createAuditLog({
-        orgId,
-        userId: user.id,
-        action: 'UPDATE_PRIVACY_SETTINGS',
-        resource: 'USER_PROFILE',
-        details: { privacyEnabled, dataSharingLevel },
-    });
-
-    return NextResponse.json(updatedUser);
 }

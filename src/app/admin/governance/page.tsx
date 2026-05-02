@@ -4,7 +4,7 @@ import React from 'react';
 import useSWR from 'swr';
 import axios from 'axios';
 
-const fetcher = (url: string) => axios.get(url).then((r) => r.data);
+const fetcher = (url: string) => axios.get(url).then((r) => r.data?.data ?? r.data);
 
 export default function GovernanceDashboard() {
     const { data: logs, isLoading } = useSWR('/api/audit', fetcher);

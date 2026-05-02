@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState, useEffect } from 'react';
+import { use, useState } from 'react';
 import useSWR from 'swr';
 import axios from 'axios';
 import {
@@ -13,10 +13,15 @@ import {
     ResponsiveContainer,
     BarChart,
     Bar,
-    Cell
 } from 'recharts';
 
-const fetcher = (url: string) => axios.get(url).then((r) => r.data);
+function Cognitivebar(props: any) {
+    const { x, y, width, height, hours } = props;
+    const fill = hours > 4 ? '#f43f5e' : '#3b82f6';
+    return <rect x={x} y={y} width={width} height={height} fill={fill} fillOpacity={0.8} rx={8} ry={8} />;
+}
+
+const fetcher = (url: string) => axios.get(url).then((r) => r.data?.data ?? r.data);
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -145,11 +150,7 @@ export default function PersonDetailPage({ params: paramsPromise }: { params: Pr
                                             cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                                             contentStyle={{ backgroundColor: '#020617', border: '1px solid #1e293b', borderRadius: '12px' }}
                                         />
-                                        <Bar dataKey="hours" radius={[8, 8, 0, 0]}>
-                                            {meetingsChartData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={entry.hours > 4 ? '#f43f5e' : '#3b82f6'} fillOpacity={0.8} />
-                                            ))}
-                                        </Bar>
+                                        <Bar dataKey="hours" shape={<Cognitivebar />} />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </div>
@@ -203,7 +204,7 @@ export default function PersonDetailPage({ params: paramsPromise }: { params: Pr
                                 className="w-full bg-black/20 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-primary/50 transition-colors"
                                 value={coachInput}
                                 onChange={(e) => setCoachInput(e.target.value)}
-                                onKeyPress={(e) => e.key === 'Enter' && handleChat()}
+                                onKeyDown={(e) => e.key === 'Enter' && handleChat()}
                             />
                             <button
                                 onClick={handleChat}
